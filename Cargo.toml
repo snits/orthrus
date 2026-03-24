@@ -3,4 +3,12 @@ name = "orthrus"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+kittest = ["dep:egui_kittest"]
+
 [dependencies]
+egui = "0.31"
+
+[dependencies.egui_kittest]
+version = "0.31"
+optional = true

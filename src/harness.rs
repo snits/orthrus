@@ -27,6 +27,12 @@ impl<A: TestableApp + 'static> TestHarness<A> {
     }
 }
 
+impl<A: TestableApp + 'static> Default for TestHarness<A> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<A: TestableApp> Deref for TestHarness<A> {
     type Target = egui_kittest::Harness<'static, A::State>;
 

@@ -47,6 +47,13 @@ pub trait TestableApp {
 - `build_ui` is framework-agnostic — both heads can call it with their own Context
 - `new_test_state()` guarantees reproducible starting state for every test
 
+**Design choice — marker type pattern:** `build_ui` and `new_test_state` are
+static methods with no `&self` receiver. The trait is implemented on a zero-sized
+marker type (e.g., `struct CounterApp;`), not on a type carrying configuration or
+resources. This is intentional: the app type is a namespace for associating a
+State type with its UI function, not an instance that holds data. All data lives
+in `State`.
+
 **What the trait does not mandate:**
 - Internal state structure (flat, nested, ECS — consumer's choice)
 - Input/action patterns (`apply(action)` is optional, not required)
@@ -78,6 +85,13 @@ impl<A: TestableApp> TestHarness<A> {
 }
 ```
 
+**Lifetime note:** The `'static` bound works because `A::build_ui` is a static
+function pointer (no borrows from the environment). `TestHarness::new()` constructs
+the inner harness by passing `A::build_ui` as the closure — since it captures
+nothing, it satisfies `'static`. If `Harness::new_state` in egui_kittest 0.31
+requires a non-`'static` closure, the wrapper design will need adjustment (see
+Verification Items).
+
 Ergonomics (Deref to inner harness or forwarding helpers for common operations
 like `get_by_label`, `click`, `run`) will be decided during implementation once
 the actual egui_kittest 0.31 API is confirmed.
@@ -107,8 +121,9 @@ egui = "0.31"
 
 [dependencies.egui_kittest]
 version = "0.31"
-features = ["wgpu", "snapshot"]
 optional = true
+# Features TBD — "wgpu" and "snapshot" are desired but must be verified
+# against egui_kittest 0.31 before adding (see Verification Items).
 ```
 
 `egui` is a regular dependency (the trait references `egui::Context`).
@@ -123,7 +138,18 @@ orthrus = { path = "../orthrus" }
 orthrus = { path = "../orthrus", features = ["kittest"] }
 ```
 
+Cargo merges features when a crate appears in both sections — during `cargo test`,
+Orthrus is compiled with `kittest` enabled; in release builds, the test
+infrastructure is absent.
+
 This keeps runtime clean (just `egui`) and test infrastructure opt-in.
+
+**AccessKit note:** kittest depends on AccessKit for widget querying. The `egui`
+crate has `accesskit` as an optional feature (not in `default`). `eframe` enables
+it by default, but `egui-macroquad` does not. For Orthrus's kittest head, this is
+not an issue — `egui_kittest::Harness` creates its own `egui::Context` with
+AccessKit enabled internally. However, this needs verification (see Verification
+Items).
 
 ## MVP Example App
 
@@ -180,14 +206,21 @@ If all tests pass, the kittest head works and Orthrus is proven.
 - No input action abstraction
 - No CI helpers or Xvfb wrappers
 
-## Verification Items
+## Verification Items (Prerequisite — Before Writing Wrapper Code)
 
-API details to confirm during implementation (from original design research):
+These must be confirmed before implementing `TestHarness`. If any item invalidates
+an assumption, the design must be adjusted before proceeding.
 
-1. `Harness::new_state` signature in egui_kittest 0.31 — confirm it exists and
-   `harness.state()` returns a reference after running
-2. Snapshot API in egui_kittest 0.31 — confirm method name and behavior
-3. Whether `accesskit` feature needs explicit enabling on the `egui` crate
+1. `Harness::new_state` signature in egui_kittest 0.31 — confirm it exists, confirm
+   the closure lifetime requirements, and confirm `harness.state()` returns a
+   reference after running
+2. Snapshot API in egui_kittest 0.31 — confirm method name, behavior, and which
+   feature flags enable it (the `TestRenderer` trait was added in 0.33, so 0.31
+   may differ)
+3. Whether `accesskit` feature needs explicit enabling on the `egui` crate, or
+   whether `egui_kittest::Harness` handles this internally
+4. Whether `egui_kittest` 0.31 features `wgpu` and `snapshot` exist — if not,
+   determine what's available and adjust dependencies accordingly
 
 ## Future Work (Post-MVP)
 

@@ -23,3 +23,9 @@ mod harness;
 
 #[cfg(feature = "kittest")]
 pub use harness::TestHarness;
+
+/// Re-exports from egui_kittest and kittest for test consumers.
+#[cfg(feature = "kittest")]
+pub mod kittest_prelude {
+    pub use egui_kittest::kittest::Queryable;
+}

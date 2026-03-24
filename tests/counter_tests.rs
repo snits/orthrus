@@ -69,3 +69,14 @@ fn toggle_panel_visible() {
     // Verify the label appears in the widget tree
     harness.get_by_label("Panel is visible");
 }
+
+#[test]
+fn panel_absent_by_default() {
+    let mut harness = TestHarness::<CounterApp>::new();
+    harness.run();
+
+    assert!(!harness.state().panel_visible);
+
+    // Verify the panel label is absent from the rendered widget tree
+    assert!(harness.query_by_label("Panel is visible").is_none());
+}

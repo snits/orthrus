@@ -4,10 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-kittest = ["dep:egui_kittest"]
+kittest = ["dep:egui_kittest", "dep:accesskit"]
 
 [dependencies]
 egui = "0.31"
+
+[dependencies.accesskit]
+version = "0.17"
+optional = true
 
 [dependencies.egui_kittest]
 version = "0.31"

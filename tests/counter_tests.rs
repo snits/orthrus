@@ -92,3 +92,23 @@ fn snapshot_default_state() {
         .try_snapshot("counter_default")
         .expect("snapshot comparison failed");
 }
+
+#[test]
+fn accesskit_role_accessible_via_orthrus() {
+    // Verify consumers can use accesskit::Role through Orthrus's re-export
+    // without needing a direct accesskit dependency
+    let _role = orthrus::accesskit::Role::Button;
+}
+
+#[test]
+fn get_by_role_via_prelude() {
+    use orthrus::kittest_prelude::Role;
+
+    let mut harness = TestHarness::<CounterApp>::new();
+    harness.run();
+
+    // Buttons are accessible by role through the prelude
+    let buttons = harness.query_all_by_role(Role::Button);
+    // Counter app has two buttons: Increment and Toggle Panel
+    assert_eq!(buttons.count(), 2);
+}

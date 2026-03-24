@@ -12,3 +12,4 @@ egui = "0.31"
 [dependencies.egui_kittest]
 version = "0.31"
 optional = true
+features = ["wgpu", "snapshot"]

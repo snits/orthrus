@@ -80,3 +80,15 @@ fn panel_absent_by_default() {
     // Verify the panel label is absent from the rendered widget tree
     assert!(harness.query_by_label("Panel is visible").is_none());
 }
+
+#[test]
+fn snapshot_default_state() {
+    let mut harness = TestHarness::<CounterApp>::new();
+    harness.run();
+
+    // Capture a snapshot of the rendered UI
+    // First run creates the reference image; subsequent runs compare against it
+    harness
+        .try_snapshot("counter_default")
+        .expect("snapshot comparison failed");
+}

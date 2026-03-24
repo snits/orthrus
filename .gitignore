@@ -1,5 +1,9 @@
 /target
 
+# Snapshot test artifacts (diff and new images; reference .png files are tracked)
+**/tests/snapshots/**/*.diff.png
+**/tests/snapshots/**/*.new.png
+
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db

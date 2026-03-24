@@ -30,7 +30,20 @@ pub use accesskit;
 #[cfg(feature = "kittest")]
 pub use egui_kittest::SnapshotError;
 
-/// Re-exports from egui_kittest and kittest for test consumers.
+/// Re-exports for writing tests against `TestHarness`.
+///
+/// # Querying widgets by role
+///
+/// Some egui widgets (like `ComboBox`) expose as a role in AccessKit rather than
+/// a text label. Use `get_by_role()` with `Role` to query them:
+///
+/// ```ignore
+/// use orthrus::kittest_prelude::{Queryable, Role};
+///
+/// let mut harness = TestHarness::<MyApp>::new();
+/// harness.run();
+/// let combo = harness.get_by_role(Role::ComboBox);
+/// ```
 #[cfg(feature = "kittest")]
 pub mod kittest_prelude {
     pub use accesskit::Role;

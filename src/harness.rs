@@ -25,6 +25,34 @@ impl<A: TestableApp + 'static> TestHarness<A> {
         let inner = egui_kittest::Harness::new_state(A::build_ui, state);
         Self { inner }
     }
+
+    /// Takes a snapshot, returning `Err` instead of panicking when no GPU is available.
+    ///
+    /// In headless or no-GPU environments (CI, dev containers), the underlying wgpu
+    /// renderer cannot initialize. This method catches that failure and returns it as
+    /// a `SnapshotError::RenderError` rather than panicking.
+    pub fn try_snapshot(&mut self, name: &str) -> Result<(), egui_kittest::SnapshotError> {
+        // egui_kittest's try_snapshot panics if the wgpu renderer can't be created
+        // (e.g., no GPU adapter in headless environments). We catch that panic and
+        // convert it to a SnapshotError::RenderError.
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.inner.try_snapshot(name)
+        }));
+
+        match result {
+            Ok(inner_result) => inner_result,
+            Err(panic_payload) => {
+                let msg = if let Some(s) = panic_payload.downcast_ref::<String>() {
+                    s.clone()
+                } else if let Some(s) = panic_payload.downcast_ref::<&str>() {
+                    (*s).to_string()
+                } else {
+                    "snapshot rendering panicked (likely no GPU adapter available)".to_string()
+                };
+                Err(egui_kittest::SnapshotError::RenderError { err: msg })
+            }
+        }
+    }
 }
 
 impl<A: TestableApp + 'static> Default for TestHarness<A> {

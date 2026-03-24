@@ -50,3 +50,22 @@ fn click_increment() {
 
     assert_eq!(harness.state().count, 1);
 }
+
+#[test]
+fn toggle_panel_visible() {
+    let mut harness = TestHarness::<CounterApp>::new();
+    harness.run();
+
+    // Panel should not be visible initially
+    assert!(!harness.state().panel_visible);
+
+    // Click toggle
+    harness.get_by_label("Toggle Panel").click();
+    harness.run();
+
+    // Panel should now be visible
+    assert!(harness.state().panel_visible);
+
+    // Verify the label appears in the widget tree
+    harness.get_by_label("Panel is visible");
+}

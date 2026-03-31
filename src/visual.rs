@@ -72,10 +72,23 @@ pub fn save_image(image: &Image, path: &Path) -> Result<(), VisualTestError> {
 ///
 /// If `UPDATE_SNAPSHOTS=1` env var is set, saves actual to reference_path and returns `Ok(())`.
 /// `threshold` is a f32 from 0.0 to 1.0 representing the max allowed fraction of differing pixels.
+/// `per_channel_tolerance` is the maximum allowed difference per color channel (0-255).
+/// Pixels where all channels differ by at most this amount are considered matching.
+/// Use 0 for exact matching, or a small value (e.g. 2) to tolerate GPU anti-aliasing jitter.
 pub fn compare_images(
     actual: &Image,
     reference_path: &Path,
     threshold: f32,
+) -> Result<(), VisualTestError> {
+    compare_images_with_tolerance(actual, reference_path, threshold, 0)
+}
+
+/// Like [`compare_images`] but with configurable per-channel tolerance.
+pub fn compare_images_with_tolerance(
+    actual: &Image,
+    reference_path: &Path,
+    threshold: f32,
+    per_channel_tolerance: u8,
 ) -> Result<(), VisualTestError> {
     if std::env::var("UPDATE_SNAPSHOTS").as_deref() == Ok("1") {
         save_image(actual, reference_path)?;
@@ -109,13 +122,14 @@ pub fn compare_images(
     let ref_bytes = reference.as_raw();
     let mut differing_pixels = 0u32;
 
+    let tol = per_channel_tolerance as i16;
     for i in 0..total_pixels as usize {
         let offset = i * 4;
-        if actual.bytes[offset] != ref_bytes[offset]
-            || actual.bytes[offset + 1] != ref_bytes[offset + 1]
-            || actual.bytes[offset + 2] != ref_bytes[offset + 2]
-            || actual.bytes[offset + 3] != ref_bytes[offset + 3]
-        {
+        let exceeds = (0..4).any(|c| {
+            let diff = (actual.bytes[offset + c] as i16 - ref_bytes[offset + c] as i16).abs();
+            diff > tol
+        });
+        if exceeds {
             differing_pixels += 1;
         }
     }

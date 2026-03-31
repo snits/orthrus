@@ -1,3 +1,5 @@
+// ABOUTME: Tests for the visual testing module's deterministic window configuration.
+
 #[cfg(feature = "visual")]
 mod visual {
     use orthrus::visual::test_window_conf;

@@ -52,8 +52,13 @@ mod visual {
     use orthrus::VisualTestError;
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU32, Ordering};
+    use std::sync::Mutex;
 
     static TEST_COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    // compare_images reads UPDATE_SNAPSHOTS env var, which is process-global.
+    // Tests that manipulate this env var must hold this lock to avoid races.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     fn test_dir() -> PathBuf {
         let id = TEST_COUNTER.fetch_add(1, Ordering::SeqCst);
@@ -94,6 +99,7 @@ mod visual {
 
     #[test]
     fn compare_images_passes_for_identical() {
+        let _lock = ENV_LOCK.lock().unwrap();
         unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
         let img = make_image(4, 4, [0, 128, 255, 255]);
         let dir = test_dir();
@@ -105,6 +111,7 @@ mod visual {
 
     #[test]
     fn compare_images_fails_for_different() {
+        let _lock = ENV_LOCK.lock().unwrap();
         unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
         let img_a = make_image(2, 2, [255, 0, 0, 255]);
         let img_b = make_image(2, 2, [0, 0, 255, 255]);
@@ -129,13 +136,13 @@ mod visual {
 
     #[test]
     fn compare_images_update_snapshots_creates_reference() {
+        let _lock = ENV_LOCK.lock().unwrap();
         let img = make_image(3, 3, [10, 20, 30, 255]);
         let dir = test_dir();
         let ref_path = dir.join("update_ref.png");
 
         assert!(!ref_path.exists());
 
-        // Set UPDATE_SNAPSHOTS=1 for this test
         unsafe { std::env::set_var("UPDATE_SNAPSHOTS", "1") };
         let result = compare_images(&img, &ref_path, 0.0);
         unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
@@ -146,12 +153,11 @@ mod visual {
 
     #[test]
     fn compare_images_reference_not_found() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
         let img = make_image(2, 2, [0, 0, 0, 255]);
         let dir = test_dir();
         let ref_path = dir.join("nonexistent_ref.png");
-
-        // Ensure UPDATE_SNAPSHOTS is not set
-        unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
 
         let result = compare_images(&img, &ref_path, 0.0);
         match result {
@@ -162,6 +168,7 @@ mod visual {
 
     #[test]
     fn compare_images_dimension_mismatch() {
+        let _lock = ENV_LOCK.lock().unwrap();
         unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
         let img_small = make_image(2, 2, [255, 255, 255, 255]);
         let img_big = make_image(4, 4, [255, 255, 255, 255]);
@@ -185,6 +192,7 @@ mod visual {
 
     #[test]
     fn compare_images_threshold_allows_some_differences() {
+        let _lock = ENV_LOCK.lock().unwrap();
         unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
         // Create a 10x10 image (100 pixels)
         let mut img_a = make_image(10, 10, [100, 100, 100, 255]);
@@ -221,6 +229,8 @@ mod visual {
 
     #[test]
     fn compare_images_saves_actual_on_failure() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
         let img_a = make_image(2, 2, [255, 0, 0, 255]);
         let img_b = make_image(2, 2, [0, 0, 255, 255]);
         let dir = test_dir();
@@ -228,10 +238,6 @@ mod visual {
         let actual_path = dir.join("failure_ref.actual.png");
 
         save_image(&img_a, &ref_path).unwrap();
-
-        // Ensure UPDATE_SNAPSHOTS is not set
-        unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
-
         let _ = compare_images(&img_b, &ref_path, 0.0);
 
         // The actual image should have been saved for debugging

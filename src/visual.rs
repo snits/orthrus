@@ -51,12 +51,6 @@ impl From<std::io::Error> for VisualTestError {
     }
 }
 
-impl From<image::ImageError> for VisualTestError {
-    fn from(e: image::ImageError) -> Self {
-        Self::ImageSave(e.to_string())
-    }
-}
-
 /// Saves a macroquad `Image` as PNG to the given path.
 ///
 /// Creates parent directories if they don't exist.
@@ -70,7 +64,7 @@ pub fn save_image(image: &Image, path: &Path) -> Result<(), VisualTestError> {
         image.bytes.clone(),
     )
     .ok_or_else(|| VisualTestError::ImageSave("buffer size mismatch".into()))?;
-    rgba.save(path)?;
+    rgba.save(path).map_err(|e| VisualTestError::ImageSave(e.to_string()))?;
     Ok(())
 }
 

@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "orthrus",
+  "project_id": "5f67afac-9b2d-42e6-b624-73b06ab53a6b"
+}

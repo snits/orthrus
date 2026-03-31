@@ -5,6 +5,7 @@ edition = "2024"
 
 [features]
 kittest = ["dep:egui_kittest", "dep:accesskit"]
+visual = ["dep:macroquad"]
 
 [dependencies]
 egui = "0.31"
@@ -17,3 +18,7 @@ optional = true
 version = "0.31"
 optional = true
 features = ["wgpu", "snapshot"]
+
+[dependencies.macroquad]
+version = "0.4"
+optional = true

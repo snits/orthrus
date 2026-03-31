@@ -1,5 +1,5 @@
 // ABOUTME: Visual testing support for macroquad-based rendering.
-// ABOUTME: Provides deterministic window configuration, frame capture, and screenshot comparison.
+// ABOUTME: Provides deterministic window configuration and frame capture for visual regression testing.
 
 use macroquad::texture::{get_screen_data, Image};
 use macroquad::window::next_frame;

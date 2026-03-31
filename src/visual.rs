@@ -68,13 +68,13 @@ pub fn save_image(image: &Image, path: &Path) -> Result<(), VisualTestError> {
     Ok(())
 }
 
-/// Compares a captured image against a reference file on disk.
+/// Compares a captured image against a reference file on disk using exact pixel matching.
 ///
 /// If `UPDATE_SNAPSHOTS=1` env var is set, saves actual to reference_path and returns `Ok(())`.
 /// `threshold` is a f32 from 0.0 to 1.0 representing the max allowed fraction of differing pixels.
-/// `per_channel_tolerance` is the maximum allowed difference per color channel (0-255).
-/// Pixels where all channels differ by at most this amount are considered matching.
-/// Use 0 for exact matching, or a small value (e.g. 2) to tolerate GPU anti-aliasing jitter.
+///
+/// For GPU-rendered content where anti-aliasing jitter causes minor per-pixel variation,
+/// use [`compare_images_with_tolerance`] instead.
 pub fn compare_images(
     actual: &Image,
     reference_path: &Path,
@@ -83,7 +83,13 @@ pub fn compare_images(
     compare_images_with_tolerance(actual, reference_path, threshold, 0)
 }
 
-/// Like [`compare_images`] but with configurable per-channel tolerance.
+/// Compares a captured image against a reference file on disk with per-channel tolerance.
+///
+/// If `UPDATE_SNAPSHOTS=1` env var is set, saves actual to reference_path and returns `Ok(())`.
+/// `threshold` is a f32 from 0.0 to 1.0 representing the max allowed fraction of differing pixels.
+/// `per_channel_tolerance` is the maximum allowed difference per color channel (0-255).
+/// Pixels where all channels differ by at most this amount are considered matching.
+/// Use 0 for exact matching, or a small value (e.g. 25) to tolerate GPU anti-aliasing jitter.
 pub fn compare_images_with_tolerance(
     actual: &Image,
     reference_path: &Path,

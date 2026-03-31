@@ -6,6 +6,19 @@ use macroquad::window::next_frame;
 
 use std::path::{Path, PathBuf};
 
+/// Telemetry from a successful image comparison.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ComparisonResult {
+    /// Max per-channel difference observed across all pixels (R, G, B, A).
+    pub max_channel_diff: [u8; 4],
+    /// Pixels that differed but were within per_channel_tolerance.
+    pub pixels_absorbed_by_tolerance: u32,
+    /// Pixels that exceeded per_channel_tolerance.
+    pub differing_pixels: u32,
+    /// Total pixel count.
+    pub total_pixels: u32,
+}
+
 /// Errors that can occur during visual regression testing.
 #[derive(Debug)]
 pub enum VisualTestError {
@@ -79,7 +92,7 @@ pub fn compare_images(
     actual: &Image,
     reference_path: &Path,
     threshold: f32,
-) -> Result<(), VisualTestError> {
+) -> Result<ComparisonResult, VisualTestError> {
     compare_images_with_tolerance(actual, reference_path, threshold, 0)
 }
 
@@ -95,10 +108,16 @@ pub fn compare_images_with_tolerance(
     reference_path: &Path,
     threshold: f32,
     per_channel_tolerance: u8,
-) -> Result<(), VisualTestError> {
+) -> Result<ComparisonResult, VisualTestError> {
     if std::env::var("UPDATE_SNAPSHOTS").as_deref() == Ok("1") {
         save_image(actual, reference_path)?;
-        return Ok(());
+        let total_pixels = actual.width() as u32 * actual.height() as u32;
+        return Ok(ComparisonResult {
+            max_channel_diff: [0; 4],
+            pixels_absorbed_by_tolerance: 0,
+            differing_pixels: 0,
+            total_pixels,
+        });
     }
 
     if !reference_path.exists() {
@@ -127,16 +146,26 @@ pub fn compare_images_with_tolerance(
     let total_pixels = actual_w * actual_h;
     let ref_bytes = reference.as_raw();
     let mut differing_pixels = 0u32;
+    let mut pixels_absorbed_by_tolerance = 0u32;
+    let mut max_channel_diff = [0u8; 4];
 
     let tol = per_channel_tolerance as i16;
     for i in 0..total_pixels as usize {
         let offset = i * 4;
-        let exceeds = (0..4).any(|c| {
+        let mut pixel_max_diff: i16 = 0;
+        for c in 0..4 {
             let diff = (actual.bytes[offset + c] as i16 - ref_bytes[offset + c] as i16).abs();
-            diff > tol
-        });
-        if exceeds {
+            if diff > pixel_max_diff {
+                pixel_max_diff = diff;
+            }
+            if diff > max_channel_diff[c] as i16 {
+                max_channel_diff[c] = diff as u8;
+            }
+        }
+        if pixel_max_diff > tol {
             differing_pixels += 1;
+        } else if pixel_max_diff > 0 {
+            pixels_absorbed_by_tolerance += 1;
         }
     }
 
@@ -154,7 +183,12 @@ pub fn compare_images_with_tolerance(
         });
     }
 
-    Ok(())
+    Ok(ComparisonResult {
+        max_channel_diff,
+        pixels_absorbed_by_tolerance,
+        differing_pixels,
+        total_pixels,
+    })
 }
 
 /// Derives the `.actual.png` debug path from a reference path.
@@ -216,4 +250,12 @@ pub async fn capture_frame(stabilize_frames: usize, mut render_fn: impl FnMut())
 
     render_fn();
     get_screen_data()
+}
+
+/// Configures egui for deterministic rendering in visual tests.
+///
+/// Call this inside `egui_macroquad::ui()` before building your UI.
+/// Pins `pixels_per_point` to 1.0 to eliminate DPI variation across machines.
+pub fn setup_deterministic_egui(ctx: &egui::Context) {
+    ctx.set_pixels_per_point(1.0);
 }

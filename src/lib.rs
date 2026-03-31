@@ -22,6 +22,9 @@ pub trait TestableApp {
 pub mod visual;
 
 #[cfg(feature = "visual")]
+pub use visual::ComparisonResult;
+
+#[cfg(feature = "visual")]
 pub use visual::VisualTestError;
 
 #[cfg(feature = "kittest")]

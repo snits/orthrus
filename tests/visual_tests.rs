@@ -48,7 +48,7 @@ mod visual {
     }
 
     use macroquad::texture::Image;
-    use orthrus::visual::{compare_images, save_image};
+    use orthrus::visual::{compare_images, compare_images_with_tolerance, save_image};
     use orthrus::VisualTestError;
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU32, Ordering};
@@ -259,5 +259,58 @@ mod visual {
         assert_eq!(result.total_pixels, 16);
         assert_eq!(result.max_channel_diff, [0, 0, 0, 0]);
         assert_eq!(result.pixels_absorbed_by_tolerance, 0);
+    }
+
+    #[test]
+    fn comparison_result_reports_absorbed_pixels() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
+
+        let reference = make_image(10, 10, [100, 100, 100, 255]);
+        let dir = test_dir();
+        let ref_path = dir.join("absorbed_ref.png");
+        save_image(&reference, &ref_path).unwrap();
+
+        // Create actual with 5 pixels differing by 10 in the red channel
+        let mut actual = make_image(10, 10, [100, 100, 100, 255]);
+        for i in 0..5 {
+            actual.bytes[i * 4] = 110; // red +10
+        }
+
+        // With tolerance=15, those 5 pixels should be absorbed
+        let result = compare_images_with_tolerance(&actual, &ref_path, 0.0, 15).unwrap();
+        assert_eq!(result.pixels_absorbed_by_tolerance, 5);
+        assert_eq!(result.differing_pixels, 0);
+        assert_eq!(result.max_channel_diff[0], 10); // red
+        assert_eq!(result.max_channel_diff[1], 0);  // green
+        assert_eq!(result.max_channel_diff[2], 0);  // blue
+        assert_eq!(result.max_channel_diff[3], 0);  // alpha
+    }
+
+    #[test]
+    fn comparison_result_tracks_per_channel_max() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
+
+        let reference = make_image(4, 4, [100, 100, 100, 255]);
+        let dir = test_dir();
+        let ref_path = dir.join("perchannel_ref.png");
+        save_image(&reference, &ref_path).unwrap();
+
+        // Pixel 0: red differs by 20
+        // Pixel 1: green differs by 15
+        // Pixel 2: blue differs by 8
+        // Pixel 3: alpha differs by 3
+        let mut actual = make_image(4, 4, [100, 100, 100, 255]);
+        actual.bytes[0] = 120;  // pixel 0: R +20
+        actual.bytes[5] = 115;  // pixel 1: G +15
+        actual.bytes[10] = 108; // pixel 2: B +8
+        actual.bytes[15] = 252; // pixel 3: A -3
+
+        let result = compare_images_with_tolerance(&actual, &ref_path, 1.0, 25).unwrap();
+        assert_eq!(result.max_channel_diff[0], 20);
+        assert_eq!(result.max_channel_diff[1], 15);
+        assert_eq!(result.max_channel_diff[2], 8);
+        assert_eq!(result.max_channel_diff[3], 3);
     }
 }

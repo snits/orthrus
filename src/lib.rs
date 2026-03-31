@@ -18,6 +18,9 @@ pub trait TestableApp {
     fn new_test_state() -> Self::State;
 }
 
+#[cfg(feature = "visual")]
+pub mod visual;
+
 #[cfg(feature = "kittest")]
 mod harness;
 

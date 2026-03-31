@@ -32,4 +32,16 @@ mod visual {
         let conf = test_window_conf(800, 600);
         assert!(!conf.fullscreen);
     }
+
+    #[test]
+    fn test_window_conf_sets_window_title() {
+        let conf = test_window_conf(800, 600);
+        assert_eq!(conf.window_title, "orthrus-test");
+    }
+
+    #[test]
+    fn test_window_conf_disables_vsync() {
+        let conf = test_window_conf(800, 600);
+        assert_eq!(conf.platform.swap_interval, Some(0));
+    }
 }

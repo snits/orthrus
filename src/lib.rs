@@ -21,6 +21,9 @@ pub trait TestableApp {
 #[cfg(feature = "visual")]
 pub mod visual;
 
+#[cfg(feature = "visual")]
+pub use visual::VisualTestError;
+
 #[cfg(feature = "kittest")]
 mod harness;
 

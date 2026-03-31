@@ -1843,6 +1843,7 @@ dependencies = [
  "accesskit",
  "egui",
  "egui_kittest",
+ "image 0.24.9",
  "macroquad",
 ]
 

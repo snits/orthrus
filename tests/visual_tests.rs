@@ -243,4 +243,21 @@ mod visual {
         // The actual image should have been saved for debugging
         assert!(actual_path.exists());
     }
+
+    #[test]
+    fn compare_images_returns_result_with_stats() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        unsafe { std::env::remove_var("UPDATE_SNAPSHOTS") };
+        let img = make_image(4, 4, [100, 100, 100, 255]);
+        let dir = test_dir();
+        let ref_path = dir.join("result_stats_ref.png");
+
+        save_image(&img, &ref_path).unwrap();
+        let result = compare_images(&img, &ref_path, 0.0).unwrap();
+
+        assert_eq!(result.differing_pixels, 0);
+        assert_eq!(result.total_pixels, 16);
+        assert_eq!(result.max_channel_diff, [0, 0, 0, 0]);
+        assert_eq!(result.pixels_absorbed_by_tolerance, 0);
+    }
 }

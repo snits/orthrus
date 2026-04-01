@@ -2,6 +2,20 @@
 name = "orthrus"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+description = "Dual-headed GUI test harness for macroquad+egui applications"
+repository = "https://github.com/jnitsel/orthrus"
+keywords = ["testing", "macroquad", "egui", "gui", "visual-regression"]
+categories = ["development-tools::testing", "game-development"]
+exclude = [
+    ".beads/",
+    ".claude/",
+    ".devcontainer/",
+    "AGENTS.md",
+    "docs/",
+    "session-handoff.md",
+]
 
 [features]
 kittest = ["dep:egui_kittest", "dep:accesskit"]
@@ -20,7 +34,7 @@ optional = true
 features = ["wgpu", "snapshot"]
 
 [dependencies.image]
-version = "0.24"
+version = "0.25"
 optional = true
 default-features = false
 features = ["png"]
@@ -33,3 +47,7 @@ optional = true
 name = "capture_frame_test"
 harness = false
 required-features = ["visual"]
+
+[[test]]
+name = "counter_tests"
+required-features = ["kittest"]

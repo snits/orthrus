@@ -1,0 +1,41 @@
+[graph]
+all-features = true
+
+[advisories]
+# macroquad has known soundness issues (RUSTSEC-2025-0035) with no fix available.
+# paste is unmaintained (RUSTSEC-2024-0436) — transitive dep via metal/wgpu-hal.
+# We accept these risks as macroquad is a core dependency.
+ignore = [
+    "RUSTSEC-2025-0035",
+    "RUSTSEC-2024-0436",
+]
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "BSL-1.0",
+    "0BSD",
+    "CC0-1.0",
+    "MPL-2.0",
+    "OFL-1.1",
+    "LicenseRef-UFL-1.0",
+    "Ubuntu-font-1.0",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

@@ -58,6 +58,8 @@ impl std::fmt::Display for VisualTestError {
     }
 }
 
+impl std::error::Error for VisualTestError {}
+
 impl From<std::io::Error> for VisualTestError {
     fn from(e: std::io::Error) -> Self {
         Self::Io(e)
@@ -144,6 +146,15 @@ pub fn compare_images_with_tolerance(
     }
 
     let total_pixels = actual_w * actual_h;
+    if total_pixels == 0 {
+        return Ok(ComparisonResult {
+            max_channel_diff: [0; 4],
+            pixels_absorbed_by_tolerance: 0,
+            differing_pixels: 0,
+            total_pixels: 0,
+        });
+    }
+
     let ref_bytes = reference.as_raw();
     let mut differing_pixels = 0u32;
     let mut pixels_absorbed_by_tolerance = 0u32;

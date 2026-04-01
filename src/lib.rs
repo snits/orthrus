@@ -1,6 +1,63 @@
 // ABOUTME: Orthrus — dual-headed GUI test harness for macroquad+egui applications.
 // ABOUTME: Provides the TestableApp trait and test harness for headless widget testing.
 
+//! Dual-headed GUI test harness for [macroquad](https://macroquad.rs)+[egui](https://docs.rs/egui) applications.
+//!
+//! Orthrus provides two independent testing approaches ("heads") for applications
+//! built with macroquad and egui:
+//!
+//! - **kittest head** (`feature = "kittest"`) — Headless widget testing via
+//!   [`egui_kittest`](https://docs.rs/egui_kittest). Query widgets by text or
+//!   accessibility role, simulate clicks, and assert state changes without a GPU.
+//!
+//! - **visual head** (`feature = "visual"`) — Screenshot-based visual regression
+//!   testing for macroquad-rendered frames. Capture frames, compare against
+//!   reference images with configurable per-channel tolerance, and track jitter
+//!   telemetry via [`ComparisonResult`].
+//!
+//! Both heads share the [`TestableApp`] trait, which defines a `State` type,
+//! a `build_ui` function, and a `new_test_state` constructor. Implement this
+//! trait once and test from either angle.
+//!
+//! # Feature Flags
+//!
+//! | Feature | What it enables |
+//! |---------|----------------|
+//! | `kittest` | [`TestHarness`], headless widget testing, accesskit queries |
+//! | `visual` | [`capture_frame`](visual::capture_frame), [`compare_images`](visual::compare_images), screenshot comparison |
+//!
+//! Enable one or both depending on your testing needs.
+//!
+//! # Quick Start (kittest)
+//!
+//! ```ignore
+//! use orthrus::{TestHarness, TestableApp};
+//! use orthrus::kittest_prelude::Queryable;
+//!
+//! let mut harness = TestHarness::<MyApp>::new();
+//! harness.run();
+//! harness.get_by_label("Increment").click();
+//! harness.run();
+//! assert_eq!(harness.state().count, 1);
+//! ```
+//!
+//! # Quick Start (visual)
+//!
+//! ```ignore
+//! use orthrus::visual::{capture_frame, compare_images_with_tolerance, test_window_conf};
+//!
+//! let image = capture_frame(2, || {
+//!     clear_background(BLACK);
+//!     render_scene(&state);
+//! }).await;
+//!
+//! compare_images_with_tolerance(&image, &ref_path, 0.02, 25)?;
+//! ```
+//!
+//! For visual tests, run with `UPDATE_SNAPSHOTS=1` to generate or update
+//! reference images. In CI, use `xvfb-run` with llvmpipe for deterministic
+//! software rendering.
+
 /// Defines a testable egui application.
 ///
 /// Implemented on a zero-sized marker type (e.g., `struct CounterApp;`).

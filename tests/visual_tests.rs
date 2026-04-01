@@ -48,11 +48,11 @@ mod visual {
     }
 
     use macroquad::texture::Image;
-    use orthrus::visual::{compare_images, compare_images_with_tolerance, save_image};
     use orthrus::VisualTestError;
+    use orthrus::visual::{compare_images, compare_images_with_tolerance, save_image};
     use std::path::PathBuf;
-    use std::sync::atomic::{AtomicU32, Ordering};
     use std::sync::Mutex;
+    use std::sync::atomic::{AtomicU32, Ordering};
 
     static TEST_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -179,10 +179,7 @@ mod visual {
         let result = compare_images(&img_big, &ref_path, 0.0);
 
         match result {
-            Err(VisualTestError::DimensionMismatch {
-                expected,
-                actual,
-            }) => {
+            Err(VisualTestError::DimensionMismatch { expected, actual }) => {
                 assert_eq!(expected, (2, 2));
                 assert_eq!(actual, (4, 4));
             }
@@ -282,9 +279,9 @@ mod visual {
         assert_eq!(result.pixels_absorbed_by_tolerance, 5);
         assert_eq!(result.differing_pixels, 0);
         assert_eq!(result.max_channel_diff[0], 10); // red
-        assert_eq!(result.max_channel_diff[1], 0);  // green
-        assert_eq!(result.max_channel_diff[2], 0);  // blue
-        assert_eq!(result.max_channel_diff[3], 0);  // alpha
+        assert_eq!(result.max_channel_diff[1], 0); // green
+        assert_eq!(result.max_channel_diff[2], 0); // blue
+        assert_eq!(result.max_channel_diff[3], 0); // alpha
     }
 
     #[test]
@@ -302,8 +299,8 @@ mod visual {
         // Pixel 2: blue differs by 8
         // Pixel 3: alpha differs by 3
         let mut actual = make_image(4, 4, [100, 100, 100, 255]);
-        actual.bytes[0] = 120;  // pixel 0: R +20
-        actual.bytes[5] = 115;  // pixel 1: G +15
+        actual.bytes[0] = 120; // pixel 0: R +20
+        actual.bytes[5] = 115; // pixel 1: G +15
         actual.bytes[10] = 108; // pixel 2: B +8
         actual.bytes[15] = 252; // pixel 3: A -3
 

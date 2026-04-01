@@ -1,7 +1,7 @@
 // ABOUTME: Visual testing support for macroquad-based rendering.
 // ABOUTME: Provides deterministic window configuration and frame capture for visual regression testing.
 
-use macroquad::texture::{get_screen_data, Image};
+use macroquad::texture::{Image, get_screen_data};
 use macroquad::window::next_frame;
 
 use std::path::{Path, PathBuf};
@@ -25,9 +25,19 @@ pub enum VisualTestError {
     Io(std::io::Error),
     ImageSave(String),
     ImageLoad(String),
-    ReferenceNotFound { path: PathBuf, hint: String },
-    DimensionMismatch { expected: (u32, u32), actual: (u32, u32) },
-    PixelMismatch { differing_pixels: u32, total_pixels: u32, threshold: f32 },
+    ReferenceNotFound {
+        path: PathBuf,
+        hint: String,
+    },
+    DimensionMismatch {
+        expected: (u32, u32),
+        actual: (u32, u32),
+    },
+    PixelMismatch {
+        differing_pixels: u32,
+        total_pixels: u32,
+        threshold: f32,
+    },
 }
 
 impl std::fmt::Display for VisualTestError {
@@ -37,7 +47,12 @@ impl std::fmt::Display for VisualTestError {
             Self::ImageSave(msg) => write!(f, "Failed to save image: {}", msg),
             Self::ImageLoad(msg) => write!(f, "Failed to load image: {}", msg),
             Self::ReferenceNotFound { path, hint } => {
-                write!(f, "Reference image not found at {}: {}", path.display(), hint)
+                write!(
+                    f,
+                    "Reference image not found at {}: {}",
+                    path.display(),
+                    hint
+                )
             }
             Self::DimensionMismatch { expected, actual } => {
                 write!(
@@ -46,12 +61,19 @@ impl std::fmt::Display for VisualTestError {
                     expected.0, expected.1, actual.0, actual.1
                 )
             }
-            Self::PixelMismatch { differing_pixels, total_pixels, threshold } => {
+            Self::PixelMismatch {
+                differing_pixels,
+                total_pixels,
+                threshold,
+            } => {
                 let fraction = *differing_pixels as f64 / *total_pixels as f64;
                 write!(
                     f,
                     "Pixel mismatch: {}/{} pixels differ ({:.2}%), threshold {:.2}%",
-                    differing_pixels, total_pixels, fraction * 100.0, threshold * 100.0
+                    differing_pixels,
+                    total_pixels,
+                    fraction * 100.0,
+                    threshold * 100.0
                 )
             }
         }
@@ -79,7 +101,8 @@ pub fn save_image(image: &Image, path: &Path) -> Result<(), VisualTestError> {
         image.bytes.clone(),
     )
     .ok_or_else(|| VisualTestError::ImageSave("buffer size mismatch".into()))?;
-    rgba.save(path).map_err(|e| VisualTestError::ImageSave(e.to_string()))?;
+    rgba.save(path)
+        .map_err(|e| VisualTestError::ImageSave(e.to_string()))?;
     Ok(())
 }
 

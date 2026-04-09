@@ -1,0 +1,10 @@
+# Exclude graphify's own outputs from re-extraction.
+# graphify-out/memory/ is intentionally NOT excluded — query results
+# saved there are meant to be folded back into the graph on --update.
+
+graphify-out/GRAPH_REPORT.md
+graphify-out/graph.json
+graphify-out/graph.html
+graphify-out/cost.json
+graphify-out/manifest.json
+graphify-out/cache/

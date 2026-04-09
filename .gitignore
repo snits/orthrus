@@ -9,3 +9,6 @@
 *.db
 .beads-credential-key
 .claude/
+
+# graphify working directory
+**/graphify-out/
